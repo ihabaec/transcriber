@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube to Text Transcriber</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="url"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .result {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .transcription {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 10px;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .error {
+            background: #fee;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .copy-btn {
+            background: #28a745;
+            padding: 8px 16px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎥 YouTube to Text</h1>
+        
+        <form id="transcriptionForm">
+            <div class="input-group">
+                <label for="youtubeUrl">YouTube Video URL:</label>
+                <input 
+                    type="url" 
+                    id="youtubeUrl" 
+                    name="youtubeUrl" 
+                    placeholder="https://www.youtube.com/watch?v=..." 
+                    required
+                >
+            </div>
+            
+            <div class="btn-container">
+                <button type="submit" id="transcribeBtn">
+                    🎤 Transcribe Video
+                </button>
+            </div>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Processing your video... This may take a few minutes.</p>
+        </div>
+
+        <div class="result" id="result">
+            <h3>Transcription:</h3>
+            <div class="transcription" id="transcriptionText"></div>
+            <button class="copy-btn" onclick="copyTranscription()">📋 Copy Text</button>
+        </div>
+
+        <div class="error" id="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        document.getElementById('transcriptionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const youtubeUrl = document.getElementById('youtubeUrl').value;
+            const loadingDiv = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+            const transcribeBtn = document.getElementById('transcribeBtn');
+            
+            // Reset UI
+            loadingDiv.classList.add('show');
+            resultDiv.classList.remove('show');
+            errorDiv.style.display = 'none';
+            transcribeBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/transcribe', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `youtubeUrl=${encodeURIComponent(youtubeUrl)}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('transcriptionText').textContent = data.transcription;
+                    resultDiv.classList.add('show');
+                } else {
+                    showError(data.error || 'An error occurred while processing the video.');
+                }
+                
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                loadingDiv.classList.remove('show');
+                transcribeBtn.disabled = false;
+            }
+        });
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function copyTranscription() {
+            const transcriptionText = document.getElementById('transcriptionText').textContent;
+            navigator.clipboard.writeText(transcriptionText).then(() => {
+                const copyBtn = document.querySelector('.copy-btn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
