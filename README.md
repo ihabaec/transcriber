@@ -141,27 +141,6 @@ The application uses the following default settings:
 
 To modify these settings, edit [TranscriptionService.java](demo/src/main/java/com/transribe/demo/service/TranscriptionService.java).
 
-## Troubleshooting
-
-### "yt-dlp is not installed"
-Install yt-dlp: `pip install yt-dlp`
-
-### "OpenAI Whisper is not installed"
-Install Whisper: `pip install openai-whisper`
-
-### "FFmpeg not found"
-Install FFmpeg using your system's package manager
-
-### Transcription takes too long
-- Try using a shorter video
-- Use a smaller Whisper model (e.g., "tiny" instead of "base")
-- Ensure your system has sufficient RAM and CPU resources
-
-### Audio extraction fails
-- Verify the YouTube URL is valid and the video is accessible
-- Check that yt-dlp is up to date: `pip install --upgrade yt-dlp`
-- Ensure FFmpeg is properly installed and in your system PATH
-
 ## Technologies Used
 
 - **Spring Boot 3.2.0** - Backend framework
